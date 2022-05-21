@@ -1,5 +1,6 @@
 #!/usr/bin/env bats
 
+set -euo pipefail
 load ../src/bats-mock
 
 setup(){
@@ -10,6 +11,7 @@ setup(){
 teardown(){
   mock_unset
 }
+
 @test 'mock_set_status requires mock to be specified' {
   run mock_set_status
   [[ "${status}" -eq 1 ]]
