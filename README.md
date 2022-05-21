@@ -1,24 +1,20 @@
 # bats-mock
 
-[![Build Status](https://travis-ci.org/grayhemp/bats-mock.svg?branch=master)](https://travis-ci.org/grayhemp/bats-mock)
-
 A [Bats][bats-core] helper library providing mocking functionality.
 
 ```bash
 load bats-mock
 
 @test "postgres.sh starts Postgres" {
-  mock="$(mock_create)"
-  mock_set_side_effect "${mock}" "echo $$ > /tmp/postgres_started"
+  mock="date"
+  mock_set_output "${mock}" "Sa 21. Mai 16:25:59 CEST 2022"
 
-  # Assuming postgres.sh expects the `_POSTGRES` variable to define a
-  # path to the `postgres` executable
-  _POSTGRES="${mock}" run postgres.sh
+  # Assuming myscript.sh calls date
+  run myscript.sh
 
   [[ "${status}" -eq 0 ]]
   [[ "$(mock_get_call_num ${mock})" -eq 1 ]]
-  [[ "$(mock_get_call_user ${mock})" = 'postgres' ]]
-  [[ "$(mock_get_call_args ${mock})" =~ -D\ /var/lib/postgresql ]]
+  [[ "$(mock_get_call_args ${mock})" == '+%m/%d/%Y' ]]
   [[ "$(mock_get_call_env ${mock} PGPORT)" -eq 5432 ]]
   [[ "$(cat /tmp/postgres_started)" -eq "$$" ]]
 }
@@ -40,8 +36,8 @@ Optionally accepts `PREFIX` and `LIBDIR` envs.
 mock_create
 ```
 
-Creates a mock program with a unique name in `BATS_TMPDIR` and outputs
-its path.
+Creates a mock program with a unique name in `BATS_TEST_TMPDIR'. And adds 
+the directory to the beginning of the PATH variable.
 
 The mock tracks calls and collects their properties. The collected
 data is accessible using methods described below.
@@ -101,16 +97,6 @@ mock_get_call_num <mock>
 
 Returns the number of times the mock was called.
 
-### `mock_get_call_user`
-
-```bash
-mock_get_call_user <mock> [<n>]
-```
-
-Returns the user the mock was called with the `n`-th time. If no `n`
-is specified then assuming the last call.
-
-It requires the mock to be called at least once.
 
 ### `mock_get_call_args`
 
@@ -125,14 +111,6 @@ It requires the mock to be called at least once.
 
 ### `mock_get_call_env`
 
-```bash
-mock_get_call_env <mock> <variable> [<n>]
-```
-
-Returns the value of the environment variable the mock was called with
-the `n`-th time. If no `n` is specified then assuming the last call.
-
-It requires the mock to be called at least once.
 
 ## Testing
 
