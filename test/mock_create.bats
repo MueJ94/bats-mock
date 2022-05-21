@@ -21,5 +21,6 @@ teardown(){
 @test 'mock_create extends PATH variable to contain mock' {
   mock_create TestMock
   type -P TestMock
+  [[ "${PATH%%:*}" == "${BATS_TEST_TMPDIR}/bats-mocks" ]]
 }
 
