@@ -11,7 +11,6 @@ mock_create() {
   local name="${1?'Mock must be specified'}"
 
   local mockdir="${BATS_TEST_TMPDIR}/bats-mocks"
-  #local mockdir=${HOME}/bats-mocks
   mkdir -p "${mockdir}"
   mock="${mockdir}/${name}"
   PATH="${mockdir}":"${PATH}"
@@ -130,7 +129,6 @@ mock_get_call_args() {
 #   STDIN: Property value if 2 is -
 mock_set_property() {
   local mock="${1?'Mock must be specified'}"
-  mock="${BATS_TEST_TMPDIR}/bats-mocks/${mock}"
   local property_name="${2?'Property name must be specified'}"
   local property_value="${3?'Property value must be specified'}"
   local n="${4-}"
