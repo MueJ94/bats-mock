@@ -8,11 +8,14 @@
 # Outputs:
 #   STDOUT: Path to the mock
 mock_create() {
-  local index
-  index="$(find ${BATS_TMPDIR} -name bats-mock.$$.* 2>&1 | \
-           grep -v 'Permission denied' | wc -l | tr -d ' ')"
-  local mock
-  mock="${BATS_TMPDIR}/bats-mock.$$.${index}"
+  local name="${1?'Mock must be specified'}"
+
+  local mockdir="${BATS_TEST_TMPDIR}/bats-mocks"
+  #local mockdir=${HOME}/bats-mocks
+  mkdir -p "${mockdir}"
+  mock="${mockdir}/${name}"
+  PATH="${mockdir}":"${PATH}"
+  export PATH
 
   echo -n 0 > "${mock}.call_num"
   echo -n 0 > "${mock}.status"
@@ -29,13 +32,7 @@ mock="${mock}"
 call_num="\$(( \$(cat \${mock}.call_num) + 1 ))"
 echo "\${call_num}" > "\${mock}.call_num"
 
-echo "\${_USER:-\$(id -un)}" > "\${mock}.user.\${call_num}"
-
 echo "\$@" > "\${mock}.args.\${call_num}"
-
-for var in \$(compgen -e); do
-  declare -p "\${var}"
-done > "\${mock}.env.\${call_num}"
 
 if [[ -e "\${mock}.output.\${call_num}" ]]; then
   cat "\${mock}.output.\${call_num}"
@@ -57,7 +54,7 @@ fi
 EOF
   chmod +x "${mock}"
 
-  echo "${mock}"
+  #echo "${mock}"
 }
 
 # Sets the exit status of the mock
@@ -106,22 +103,7 @@ mock_set_side_effect() {
 #   STDOUT: Number of calls
 mock_get_call_num() {
   local mock="${1?'Mock must be specified'}"
-
   echo "$(cat ${mock}.call_num)"
-}
-
-# Returns the user the mock was called with
-# Arguments:
-#   1: Path to the mock
-#   2: Index of the call, optional
-# Outputs:
-#   STDOUT: User name
-mock_get_call_user() {
-  local mock="${1?'Mock must be specified'}"
-  local n
-  n="$(mock_default_n ${mock} ${2-})" || exit "$?"
-
-  echo "$(cat ${mock}.user.${n})"
 }
 
 # Returns the arguments line the mock was called with
@@ -138,23 +120,6 @@ mock_get_call_args() {
   echo "$(cat ${mock}.args.${n})"
 }
 
-# Returns the value of the environment variable the mock was called with
-# Arguments:
-#   1: Path to the mock
-#   2: Variable name
-#   3: Index of the call, optional
-# Outputs:
-#   STDOUT: Variable value
-mock_get_call_env() {
-  local mock="${1?'Mock must be specified'}"
-  local var="${2?'Variable name must be specified'}"
-  local n
-  n="$(mock_default_n ${mock} ${3-})" || exit "$?"
-
-  source "${mock}.env.${n}"
-  echo "${!var-}"
-}
-
 # Sets a specific property of the mock
 # Arguments:
 #   1: Path to the mock
@@ -165,6 +130,7 @@ mock_get_call_env() {
 #   STDIN: Property value if 2 is -
 mock_set_property() {
   local mock="${1?'Mock must be specified'}"
+  mock="${BATS_TEST_TMPDIR}/bats-mocks/${mock}"
   local property_name="${2?'Property name must be specified'}"
   local property_value="${3?'Property value must be specified'}"
   local n="${4-}"
@@ -172,6 +138,7 @@ mock_set_property() {
   if [[ "${property_value}" = '-' ]]; then
     property_value="$(cat -)"
   fi
+
 
   if [[ -n "${n}" ]]; then
     echo -e "${property_value}" > "${mock}.${property_name}.${n}"
@@ -205,4 +172,14 @@ mock_default_n() {
   fi
 
   echo "${n}"
+}
+
+# Remove all mocks
+# Arguments:
+#   None
+# Returns:
+#   1: If mocks could not be removed
+mock_unset(){
+  local mockdir="${BATS_TEST_TMPDIR}/bats-mocks"
+  rm -rf "${mockdir}"
 }
