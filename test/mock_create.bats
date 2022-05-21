@@ -4,27 +4,15 @@ set -euo pipefail
 
 load ../src/bats-mock
 
-teardown() {
-  rm "${BATS_TMPDIR}/bats-mock.$$."*
-}
-
 @test 'mock_create creates a program' {
-  run mock_create
+  run mock_create TestMock
   [[ "${status}" -eq 0 ]]
-  [[ -x "${output}" ]]
+  [[ -f ${BATS_TEST_TMPDIR}/bats-mocks/TestMock ]]
+  mock_unset
 }
 
-@test 'mock_create names the program uniquely' {
-  run mock_create
-  [[ "${status}" -eq 0 ]]
-  mock="${output}"
-  run mock_create
-  [[ "${status}" -eq 0 ]]
-  [[ "${output}" != "${mock}" ]]
+@test 'mock_create extends PATH variable to contain mock' {
+  mock_create TestMock
+  type -P TestMock
 }
 
-@test 'mock_create creates a program in BATS_TMPDIR' {
-  run mock_create
-  [[ "${status}" -eq 0 ]]
-  [[ "$(dirname ${output})" = "${BATS_TMPDIR}" ]]
-}

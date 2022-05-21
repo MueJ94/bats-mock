@@ -1,6 +1,15 @@
 #!/usr/bin/env bats
 
-load mock_test_suite
+load ../src/bats-mock
+
+setup(){
+  mock="TestMock"
+  mock_create "${mock}"
+}
+
+teardown(){
+  mock_unset
+}
 
 @test 'mock_set_side_effect requires mock to be specified' {
   run mock_set_side_effect
